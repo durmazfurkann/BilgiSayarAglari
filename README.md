@@ -79,5 +79,7 @@ python src/run_experiments.py
 ##  Hazırlayanlar
 BSM307 - Bilgisayar Ağları Dersi - Güz 2025
 
+Furkan Durmaz 24110310028
+
 ##  Seed Bilgisi
 Ağ oluşturma: `seed=42` (Tekrarlanabilirlik için)
