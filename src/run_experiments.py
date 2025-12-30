@@ -27,8 +27,10 @@ def run_experiments():
     # 2. Her talep için döngü
     total_demands = len(demands)
     for idx, row in demands.iterrows():
+
         src, dst = int(row['src']), int(row['dst'])
-        print(f"[{idx+1}/{total_demands}] Talep İşleniyor: {src} -> {dst} ...")
+        bw_demand = int(row['bw_demand'])
+        print(f"[{idx+1}/{total_demands}] Talep İşleniyor: {src} -> {dst} (BW: {bw_demand} Mbps) ...")
 
         # --- GENETİK ALGORİTMA (GA) ---
         ga_costs = []
@@ -38,7 +40,7 @@ def run_experiments():
         
         for _ in range(REPEAT_COUNT):
             start_time = time.time()
-            solver = GeneticSolver(network, src, dst)
+            solver = GeneticSolver(network, src, dst, min_bw=bw_demand)
             ga_path, cost, _, _ = solver.solve()
             duration = (time.time() - start_time) * 1000 # ms cinsinden
             
@@ -58,7 +60,7 @@ def run_experiments():
         
         for _ in range(REPEAT_COUNT):
             start_time = time.time()
-            solver = QLearningSolver(network, src, dst)
+            solver = QLearningSolver(network, src, dst, min_bw=bw_demand)
             solver.train() 
             path = solver.get_path() # Yolu bul
             

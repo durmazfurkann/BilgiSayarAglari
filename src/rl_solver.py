@@ -13,8 +13,10 @@ class QLearningSolver:
     - Q-Tablosu (Q-Table) zamanla 'hangi durumda hangi hareket kazançlı' bilgisini öğrenir.
     - Hedef: Toplam ödülü maksimize (Maliyeti minimize) etmek.
     """
-    def __init__(self, network_model, src, dst):
+    def __init__(self, network_model, src, dst, min_bw=0):
         self.model = network_model
+        # BW Kısıtı: Filtrelenmiş graf (self.graph) üzerinden işlem yap
+        self.graph = network_model.get_filtered_graph(min_bw)
         self.src = src
         self.dst = dst
         self.q_table = {} # Q(State, Action) -> Değer
@@ -25,7 +27,7 @@ class QLearningSolver:
 
     def calculate_step_cost(self, u, v):
         """Tek bir adımın (linkin) ağırlıklı maliyetini hesaplar."""
-        edge = self.model.graph[u][v]
+        edge = self.graph[u][v]
         
         # 1. Gecikme (Link + Hedef Node İşlem)
         delay = edge['link_delay'] + self.model.graph.nodes[u]['proc_delay']
@@ -60,7 +62,7 @@ class QLearningSolver:
             # Sonsuz döngü koruması
             steps = 0
             while state != self.dst and steps < 50:
-                neighbors = list(self.model.graph.neighbors(state))
+                neighbors = list(self.graph.neighbors(state))
                 if not neighbors: break
                 
                 # Epsilon-Greedy Seçim (Keşfet vs Sömür)
@@ -86,7 +88,7 @@ class QLearningSolver:
                 # Bellman Denklemi ile Güncelleme
                 old_q = self.get_q(state, action)
                 
-                next_neighbors = list(self.model.graph.neighbors(action))
+                next_neighbors = list(self.graph.neighbors(action))
                 next_max = 0
                 if next_neighbors:
                     next_max = max([self.get_q(action, n) for n in next_neighbors])
@@ -118,7 +120,7 @@ class QLearningSolver:
         
         steps = 0
         while state != self.dst and steps < 100:
-            neighbors = [n for n in self.model.graph.neighbors(state) if n not in visited]
+            neighbors = [n for n in self.graph.neighbors(state) if n not in visited]
             if not neighbors: break
             
             # Öğrenilmiş Q değerlerine göre en iyiyi seç (Exploration kapalı)

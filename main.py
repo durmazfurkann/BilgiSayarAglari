@@ -87,6 +87,12 @@ def main():
         if src == dst:
             print(" Kaynak ve Hedef aynı olamaz!")
             continue
+            
+        bw_input = input("📊 Talep Edilen Bant Genişliği (Mbps) [Varsayılan: 0]: ")
+        try:
+            bw_demand = int(bw_input)
+        except ValueError:
+            bw_demand = 0
 
         # 3. Ağırlık Ayarları
         w_d, w_r, w_res = get_weights()
@@ -99,11 +105,11 @@ def main():
 
         # 4. Algoritmaları Çalıştır
         print(f" Genetik Algoritma (GA) çalışıyor...")
-        ga = GeneticSolver(network, src, dst)
+        ga = GeneticSolver(network, src, dst, min_bw=bw_demand)
         ga_path, ga_cost, _, _ = ga.solve()
         
         print(f" Q-Learning (RL) çalışıyor (Eğitim)...")
-        rl = QLearningSolver(network, src, dst)
+        rl = QLearningSolver(network, src, dst, min_bw=bw_demand)
         rl.train()
         rl_path = rl.get_path()
         rl_cost_data = network.calculate_cost(rl_path)

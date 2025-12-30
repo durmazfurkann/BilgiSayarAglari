@@ -11,9 +11,10 @@ class GeneticSolver:
     - Operatörler: Çaprazlama (Crossover) ve Mutasyon ile yeni yollar keşfedilir.
     - Amaç: Gecikme, Güvenilirlik ve Kaynak kullanımını optimize etmek.
     """
-    def __init__(self, network_model, src, dst):
+    def __init__(self, network_model, src, dst, min_bw=0):
         self.model = network_model
-        self.graph = network_model.graph
+        # BW Kısıtı: Sadece kapasitesi yeten linkleri içeren alt-grafı kullan
+        self.graph = network_model.get_filtered_graph(min_bw)
         self.src = src
         self.dst = dst
         self.population = [] # Kromozomlar (Yollar)
@@ -162,9 +163,6 @@ class GeneticSolver:
         # Analiz için son popülasyon verilerini hazırla (Pareto)
         pareto_data = []
         for p in self.population:
-            # Her bir yolun detaylı metriklerini (Delay, Reliability) hesapla
-            # Bunun için modelde ayrı fonksiyonumuz yok ama manuel hesaplayabiliriz ya da tahmini cost verebiliriz
-            # Şimdilik maliyet ve adım sayısını dönelim
             metrics = self.model.calculate_metrics(p) # Bu fonksiyonu Model'e ekleyeceğiz
             pareto_data.append(metrics)
 

@@ -14,7 +14,7 @@
 pip install -r requirements.txt
 
 # Veya ayrı ayrı
-pip install networkx pandas numpy matplotlib
+pip install networkx pandas numpy matplotlib openpyxl
 ```
 
 ##  Çalıştırma
@@ -41,7 +41,7 @@ python src/gui_app.py
 python src/run_experiments.py
 ```
 - 20 farklı senaryo, 5'er tekrar
-- Sonuçlar: `Proje_Sonuclari.csv`
+- Sonuçlar: `Proje_Sonuclari.xlsx`
 
 ##  Dosya Yapısı
 ```
@@ -57,7 +57,7 @@ python src/run_experiments.py
 │   ├── rl_solver.py         # Q-Learning
 │   ├── gui_app.py           # Görsel arayüz
 │   └── run_experiments.py   # Deney scripti
-├── Proje_Sonuclari.csv      # Karşılaştırma tablosu
+├── Proje_Sonuclari.xlsx     # Karşılaştırma tablosu (Excel)
 └── requirements.txt         # Bağımlılıklar
 ```
 
@@ -71,7 +71,7 @@ python src/run_experiments.py
 | RL_EPSILON | 0.1 | Keşif oranı |
 
 ##  Sonuçlar
-`Proje_Sonuclari.csv` dosyasında 20 test senaryosu için:
+`Proje_Sonuclari.xlsx` dosyasında 20 test senaryosu için:
 - En iyi maliyet, ortalama maliyet, standart sapma
 - Çalışma süreleri (ms)
 - Kazanan algoritma

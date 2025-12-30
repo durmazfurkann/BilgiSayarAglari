@@ -212,17 +212,18 @@ class QoSRoutingApp:
         self.result_text.delete(1.0, tk.END)
         self.result_text.insert(tk.END, "Lütfen bekleyin, hesaplanıyor...\n(RL eğitimi zaman alabilir)")
         
-        threading.Thread(target=self._solve_thread, args=(src, dst)).start()
+        bw_demand = self.bw_demand_var.get()
+        threading.Thread(target=self._solve_thread, args=(src, dst, bw_demand)).start()
 
-    def _solve_thread(self, src, dst):
+    def _solve_thread(self, src, dst, bw_demand):
         try:
             # GA Çalıştır
-            ga = GeneticSolver(self.network, src, dst)
+            ga = GeneticSolver(self.network, src, dst, min_bw=bw_demand)
             # solve() artık (path, cost, history, pareto_data) dönüyor
             ga_path, ga_cost, ga_hist, ga_pareto = ga.solve()
             
             # RL Çalıştır
-            rl = QLearningSolver(self.network, src, dst)
+            rl = QLearningSolver(self.network, src, dst, min_bw=bw_demand)
             # train() artık history dönüyor
             rl_hist = rl.train()
             rl_path = rl.get_path()

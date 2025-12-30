@@ -143,3 +143,16 @@ class NetworkModel:
                 min_bw = bw
                 
         return int(min_bw) if min_bw != float('inf') else None
+
+    def get_filtered_graph(self, min_bw):
+        """
+        Belirtilen bant genişliği (min_bw) altındaki linkleri budanmış 
+        yeni bir graf (View) döndürür.
+        """
+        if min_bw <= 0:
+            return self.graph
+            
+        def filter_edge(u, v):
+            return self.graph[u][v].get('bandwidth', 0) >= min_bw
+            
+        return nx.subgraph_view(self.graph, filter_edge=filter_edge)
