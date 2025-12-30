@@ -35,15 +35,29 @@ class NetworkModel:
 
     def calculate_cost(self, path):
         """
-        Verilen yolun toplam ağırlıklı maliyetini hesaplar.
+        Verilen yolun toplam ağırlıklı maliyetini ve detaylarını hesaplar.
         Formül: W_delay * Gecikme + W_rel * Güven_Maliyeti + W_res * Kaynak_Maliyeti
+        
+        Dönüş: {
+            'score': float,           # Ağırlıklı toplam maliyet
+            'delay': float,           # Toplam gecikme (ms)
+            'bandwidth': float,       # Minimum bant genişliği (Mbps)
+            'reliability': float      # Toplam güvenilirlik (0-1 arası)
+        }
         """
         if not path or len(path) < 2:
-            return float('inf')
+            return {
+                'score': float('inf'),
+                'delay': float('inf'),
+                'bandwidth': 0,
+                'reliability': 0
+            }
 
         total_delay = 0
         total_rel_cost = 0
         total_res_cost = 0
+        total_reliability = 1.0
+        min_bandwidth = float('inf')
 
         for i in range(len(path) - 1):
             u, v = path[i], path[i+1]
@@ -57,18 +71,27 @@ class NetworkModel:
             # 2. Güvenilirlik (-log ile toplamsal hale getirme)
             if edge['reliability'] > 0:
                 total_rel_cost += -math.log(edge['reliability'])
+                total_reliability *= edge['reliability']
             if i > 0 and self.graph.nodes[u]['reliability'] > 0:
                 total_rel_cost += -math.log(self.graph.nodes[u]['reliability'])
+                total_reliability *= self.graph.nodes[u]['reliability']
 
             # 3. Kaynak Kullanımı (1000/Bant Genişliği)
             if edge['bandwidth'] > 0:
                 total_res_cost += (1000.0 / edge['bandwidth'])
+                if edge['bandwidth'] < min_bandwidth:
+                    min_bandwidth = edge['bandwidth']
 
         weighted_cost = (W_DELAY * total_delay) + \
                         (W_RELIABILITY * total_rel_cost) + \
                         (W_RESOURCE * total_res_cost)
         
-        return weighted_cost
+        return {
+            'score': round(weighted_cost, 4),
+            'delay': round(total_delay, 2),
+            'bandwidth': int(min_bandwidth) if min_bandwidth != float('inf') else 0,
+            'reliability': round(total_reliability, 5)
+        }
 
     def calculate_metrics(self, path):
         """
@@ -97,7 +120,7 @@ class NetworkModel:
                 total_reliability *= self.graph.nodes[u]['reliability']
                 
         return {
-            'cost': self.calculate_cost(path),
+            'cost': self.calculate_cost(path)['score'],
             'delay': round(total_delay, 2),
             'reliability': round(total_reliability, 5),
             'hops': len(path) - 1

@@ -123,7 +123,8 @@ class GeneticSolver:
             # Maliyetleri hesapla
             scored_pop = []
             for p in self.population:
-                cost = self.model.calculate_cost(p)
+                cost_data = self.model.calculate_cost(p)
+                cost = cost_data['score']
                 scored_pop.append((cost, p))
             
             # Sırala (Küçükten büyüğe)

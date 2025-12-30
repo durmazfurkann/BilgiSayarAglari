@@ -17,9 +17,9 @@ def get_valid_node(prompt, max_node):
             if 0 <= node_id < max_node:
                 return node_id
             else:
-                print(f"❌ Hata: Düğüm 0 ile {max_node-1} arasında olmalı.")
+                print(f" Hata: Düğüm 0 ile {max_node-1} arasında olmalı.")
         except ValueError:
-            print("❌ Hata: Lütfen sayı girin.")
+            print(" Hata: Lütfen sayı girin.")
 
 def get_weights():
     """Kullanıcıdan optimizasyon ağırlıklarını ister."""
@@ -64,7 +64,7 @@ def main():
     print("=================================================")
     
     # 1. Ağı Yükle
-    print("⏳ Ağ modeli yükleniyor... Lütfen bekleyin.")
+    print(" Ağ modeli yükleniyor... Lütfen bekleyin.")
     try:
         network = NetworkModel(NODE_FILE, EDGE_FILE)
         max_nodes = network.graph.number_of_nodes()
@@ -78,14 +78,14 @@ def main():
         print("YENİ SORGULAMA (Çıkmak için 'q' basın)")
         
         # 2. Kullanıcı Girdileri
-        src = get_valid_node(f"📌 Kaynak Düğüm (Source 0-{max_nodes-1}): ", max_nodes)
+        src = get_valid_node(f" Kaynak Düğüm (Source 0-{max_nodes-1}): ", max_nodes)
         if src == 'q': break
         
-        dst = get_valid_node(f"🏁 Hedef Düğüm (Destination 0-{max_nodes-1}): ", max_nodes)
+        dst = get_valid_node(f" Hedef Düğüm (Destination 0-{max_nodes-1}): ", max_nodes)
         if dst == 'q': break
         
         if src == dst:
-            print("⚠️ Kaynak ve Hedef aynı olamaz!")
+            print(" Kaynak ve Hedef aynı olamaz!")
             continue
 
         # 3. Ağırlık Ayarları
@@ -94,19 +94,20 @@ def main():
         config.W_RELIABILITY = w_r
         config.W_RESOURCE = w_res
         
-        print(f"\n⚙️ Parametreler: Gecikme={w_d:.2f}, Güven={w_r:.2f}, Kaynak={w_res:.2f}")
+        print(f"\n Parametreler: Gecikme={w_d:.2f}, Güven={w_r:.2f}, Kaynak={w_res:.2f}")
         print("-" * 40)
 
         # 4. Algoritmaları Çalıştır
-        print(f"🧬 Genetik Algoritma (GA) çalışıyor...")
+        print(f" Genetik Algoritma (GA) çalışıyor...")
         ga = GeneticSolver(network, src, dst)
-        ga_path, ga_cost = ga.solve()
+        ga_path, ga_cost, _, _ = ga.solve()
         
-        print(f"🤖 Q-Learning (RL) çalışıyor (Eğitim)...")
+        print(f" Q-Learning (RL) çalışıyor (Eğitim)...")
         rl = QLearningSolver(network, src, dst)
         rl.train()
         rl_path = rl.get_path()
-        rl_cost = network.calculate_cost(rl_path)
+        rl_cost_data = network.calculate_cost(rl_path)
+        rl_cost = rl_cost_data['score']
 
         # 5. Sonuçları Karşılaştır ve Yazdır
         print("\n" + "-"*60)
@@ -117,31 +118,31 @@ def main():
         print("-" * 60)
         
         # --- EKLENEN KISIM: YOL LİSTESİ ---
-        print("📍 BULUNAN YOLLAR:")
-        print(f"   🧬 GA Yolu: {format_path(ga_path)}")
-        print(f"   🤖 RL Yolu: {format_path(rl_path)}")
+        print(" BULUNAN YOLLAR:")
+        print(f"    GA Yolu: {format_path(ga_path)}")
+        print(f"    RL Yolu: {format_path(rl_path)}")
         
         winner_path = None
         winner_name = ""
         
         if ga_cost < rl_cost:
-            print("\n🏆 KAZANAN: Genetik Algoritma (Daha Düşük Maliyet)")
+            print("\n KAZANAN: Genetik Algoritma (Daha Düşük Maliyet)")
             winner_path = ga_path
             winner_name = "Genetik Algoritma (GA)"
         else:
-            print("\n🏆 KAZANAN: Q-Learning (Daha Düşük Maliyet)")
+            print("\n KAZANAN: Q-Learning (Daha Düşük Maliyet)")
             winner_path = rl_path
             winner_name = "Q-Learning (RL)"
 
         # 6. Görselleştirme
         if winner_path:
             metrics = f"Maliyet: {min(ga_cost, rl_cost):.2f} | Adımlar: {len(winner_path)}\nAğırlıklar: D={w_d:.2f}, R={w_r:.2f}, C={w_res:.2f}"
-            print("📈 Grafik çiziliyor... (Pencereyi kapatınca yeni sorgu yapabilirsiniz)")
+            print(" Grafik çiziliyor... (Pencereyi kapatınca yeni sorgu yapabilirsiniz)")
             draw_network_path(network.graph, winner_path, 
                             title=f"En İyi Yol: {src} -> {dst} ({winner_name})", 
                             details=metrics)
         else:
-            print("❌ İki algoritma da yol bulamadı!")
+            print(" İki algoritma da yol bulamadı!")
 
 if __name__ == "__main__":
     main()

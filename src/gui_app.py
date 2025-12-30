@@ -226,7 +226,8 @@ class QoSRoutingApp:
             # train() artık history dönüyor
             rl_hist = rl.train()
             rl_path = rl.get_path()
-            rl_cost = self.network.calculate_cost(rl_path)
+            rl_cost_data = self.network.calculate_cost(rl_path)
+            rl_cost = rl_cost_data['score']
             
             # GUI Güncelleme
             self.root.after(0, lambda: self.show_results(src, dst, 
@@ -259,7 +260,7 @@ class QoSRoutingApp:
             res += f"Kaynak: {src} -> Hedef: {dst}\n"
             res += f"Talep Edilen BW: {bw_demand} Mbps\n\n"
             
-            res += "🧬 GENETİK ALGORİTMA\n"
+            res += " GENETİK ALGORİTMA\n"
             if metrics_ga:
                 res += f"Maliyet: {metrics_ga['cost']:.4f}\n"
                 res += f"Gecikme: {metrics_ga['delay']} ms\n"
@@ -267,12 +268,12 @@ class QoSRoutingApp:
                 res += f"Adım Sayısı: {metrics_ga['hops']}\n"
                 res += f"Yolun Min BW: {ga_min_bw} Mbps"
                 if ga_min_bw and ga_min_bw >= bw_demand:
-                    res += " ✅\n"
+                    res += " \n"
                 else:
-                    res += " ❌ (Yetersiz!)\n"
+                    res += "  (Yetersiz!)\n"
             else: res += "Yol bulunamadı.\n"
             
-            res += "\n🤖 Q-LEARNING (RL)\n"
+            res += "\n Q-LEARNING (RL)\n"
             if metrics_rl:
                 res += f"Maliyet: {metrics_rl['cost']:.4f}\n"
                 res += f"Gecikme: {metrics_rl['delay']} ms\n"
@@ -280,16 +281,15 @@ class QoSRoutingApp:
                 res += f"Adım Sayısı: {metrics_rl['hops']}\n"
                 res += f"Yolun Min BW: {rl_min_bw} Mbps"
                 if rl_min_bw and rl_min_bw >= bw_demand:
-                    res += " ✅\n"
+                    res += " \n"
                 else:
-                    res += " ❌ (Yetersiz!)\n"
+                    res += "  (Yetersiz!)\n"
             else: res += "Yol bulunamadı.\n"
             
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, res)
 
-            # 2. Harita Güncelleme (En iyi yolu çiz)
-            winner_path = ga_path if ga_cost < rl_cost else rl_path
+            # 2. Harita Güncelleme (Her iki yolu da göster)
             winner_name = "GA" if ga_cost < rl_cost else "RL"
             
             self.ax_map.clear()
@@ -300,14 +300,48 @@ class QoSRoutingApp:
             nx.draw_networkx_nodes(G, pos, node_size=20, node_color='#DDDDDD', alpha=0.5, ax=self.ax_map)
             nx.draw_networkx_edges(G, pos, width=0.5, edge_color='#EEEEEE', alpha=0.4, ax=self.ax_map)
             
-            # Kazanan Yol
-            if winner_path:
-                path_edges = list(zip(winner_path, winner_path[1:]))
-                nx.draw_networkx_nodes(G, pos, nodelist=winner_path, node_size=60, node_color='blue', ax=self.ax_map)
-                nx.draw_networkx_nodes(G, pos, nodelist=[src], node_size=120, node_color='green', label="S", ax=self.ax_map)
-                nx.draw_networkx_nodes(G, pos, nodelist=[dst], node_size=120, node_color='red', label="D", ax=self.ax_map)
-                nx.draw_networkx_edges(G, pos, edgelist=path_edges, edge_color='red', width=2, ax=self.ax_map)
-                self.ax_map.set_title(f"Kazanan Yol ({winner_name})")
+            # GA Yolu (Mavi) - Kaybedense ince, kazandıysa kalın
+            if ga_path and len(ga_path) >= 2:
+                ga_edges = list(zip(ga_path, ga_path[1:]))
+                ga_width = 3 if winner_name == "GA" else 1.5
+                ga_style = 'solid' if winner_name == "GA" else 'dashed'
+                nx.draw_networkx_edges(G, pos, edgelist=ga_edges, edge_color='#2196F3', 
+                                      width=ga_width, style=ga_style, alpha=0.8, ax=self.ax_map)
+                # GA yolu düğümleri
+                ga_middle_nodes = ga_path[1:-1]  # Baş ve son hariç
+                if ga_middle_nodes:
+                    nx.draw_networkx_nodes(G, pos, nodelist=ga_middle_nodes, node_size=40, 
+                                          node_color='#2196F3', alpha=0.7, ax=self.ax_map)
+            
+            # RL Yolu (Turuncu) - Kaybedense ince, kazandıysa kalın
+            if rl_path and len(rl_path) >= 2:
+                rl_edges = list(zip(rl_path, rl_path[1:]))
+                rl_width = 3 if winner_name == "RL" else 1.5
+                rl_style = 'solid' if winner_name == "RL" else 'dashed'
+                nx.draw_networkx_edges(G, pos, edgelist=rl_edges, edge_color='#FF9800', 
+                                      width=rl_width, style=rl_style, alpha=0.8, ax=self.ax_map)
+                # RL yolu düğümleri
+                rl_middle_nodes = rl_path[1:-1]  # Baş ve son hariç
+                if rl_middle_nodes:
+                    nx.draw_networkx_nodes(G, pos, nodelist=rl_middle_nodes, node_size=40, 
+                                          node_color='#FF9800', alpha=0.7, ax=self.ax_map)
+            
+            # Kaynak ve Hedef (Her zaman en üstte görünsün)
+            nx.draw_networkx_nodes(G, pos, nodelist=[src], node_size=150, node_color='#4CAF50', 
+                                  edgecolors='white', linewidths=2, ax=self.ax_map)
+            nx.draw_networkx_nodes(G, pos, nodelist=[dst], node_size=150, node_color='#F44336', 
+                                  edgecolors='white', linewidths=2, ax=self.ax_map)
+            
+            # Legend ve Başlık
+            from matplotlib.lines import Line2D
+            legend_elements = [
+                Line2D([0], [0], color='#2196F3', linewidth=2, label=f'GA Yolu (Maliyet: {ga_cost:.2f})'),
+                Line2D([0], [0], color='#FF9800', linewidth=2, label=f'RL Yolu (Maliyet: {rl_cost:.2f})'),
+                Line2D([0], [0], marker='o', color='w', markerfacecolor='#4CAF50', markersize=10, label='Kaynak (S)'),
+                Line2D([0], [0], marker='o', color='w', markerfacecolor='#F44336', markersize=10, label='Hedef (D)')
+            ]
+            self.ax_map.legend(handles=legend_elements, loc='upper left', fontsize=8)
+            self.ax_map.set_title(f"Yol Karşılaştırması - Kazanan: {winner_name} ")
             
             self.ax_map.axis('off')
             self.canvas_map.draw()

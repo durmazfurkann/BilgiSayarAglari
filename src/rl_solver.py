@@ -101,7 +101,8 @@ class QLearningSolver:
             # İlerleme Kaydı (Her 100 bölümde bir o anki bilgisiyle yol bulup maliyetine bak)
             if episode % 100 == 0:
                 test_path = self.get_path()
-                cost = self.model.calculate_cost(test_path)
+                cost_data = self.model.calculate_cost(test_path)
+                cost = cost_data['score']
                 # Sonsuz maliyetleri grafikte göstermemek için filtreleyebiliriz veya max değer verebiliriz
                 history.append(cost if cost != float('inf') else 0)
 
